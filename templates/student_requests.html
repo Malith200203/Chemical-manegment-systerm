@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}My Requests - Student{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">My Chemical Requests</h2>
+
+    <!-- Statistics -->
+    <div class="dashboard-grid" style="margin-bottom: 2rem;">
+        <div class="dashboard-card">
+            <h3>Total Requests</h3>
+            <div class="number">{{ requests|length }}</div>
+            <p>All your requests</p>
+        </div>
+        <div class="dashboard-card warning">
+            <h3>Pending</h3>
+            <div class="number">{{ requests|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+            <p>Awaiting approval</p>
+        </div>
+        <div class="dashboard-card success">
+            <h3>Approved</h3>
+            <div class="number">{{ requests|selectattr('status', 'equalto', 'approved')|list|length }}</div>
+            <p>Ready to collect</p>
+        </div>
+        <div class="dashboard-card danger">
+            <h3>Rejected</h3>
+            <div class="number">{{ requests|selectattr('status', 'equalto', 'rejected')|list|length }}</div>
+            <p>Not approved</p>
+        </div>
+    </div>
+
+    <!-- New Request Button -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('inventory') }}" class="btn btn-success">➕ Create New Request</a>
+    </div>
+
+    <!-- Requests List -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Request History</h2>
+        </div>
+
+        {% if requests %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Request ID</th>
+                        <th>Chemical</th>
+                        <th>Quantity</th>
+                        <th>Purpose</th>
+                        <th>Request Date</th>
+                        <th>Required Date</th>
+                        <th>Expected Return</th>
+                        <th>Status</th>
+                        <th>Response</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td><strong>#{{ req.id }}</strong></td>
+                        <td>{{ req.chemical_name }}</td>
+                        <td>{{ req.quantity_requested }} {{ req.unit }}</td>
+                        <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="{{ req.purpose }}">
+                                {{ req.purpose[:50] }}{% if req.purpose|length > 50 %}...{% endif %}
+                            </div>
+                        </td>
+                        <td>{{ req.request_date }}</td>
+                        <td>{{ req.required_date }}</td>
+                        <td>{{ req.expected_return_date }}</td>
+                        <td>
+                            {% if req.status == 'pending' %}
+                            <span class="badge badge-warning">⏳ Pending</span>
+                            {% elif req.status == 'approved' %}
+                            <span class="badge badge-success">✅ Approved</span>
+                            {% elif req.status == 'rejected' %}
+                            <span class="badge badge-danger">❌ Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.admin_response %}
+                            <button class="btn btn-small btn-secondary" onclick="alert('Admin Response:\n{{ req.admin_response }}')">
+                                View Response
+                            </button>
+                            {% else %}
+                            <span style="color: #999;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No requests yet</h3>
+            <p>You haven't made any chemical requests yet</p>
+            <a href="{{ url_for('inventory') }}" class="btn btn-primary">Browse Chemicals</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

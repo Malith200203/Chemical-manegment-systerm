@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Requests - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">Chemical Requests Management</h2>
+
+    <!-- Filter Section -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+            <h3>Filter Requests</h3>
+        </div>
+        <div style="padding: 1rem;">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="{{ url_for('admin_requests', status='all') }}" 
+                   class="btn {{ 'btn-primary' if status_filter == 'all' else 'btn-secondary' }}">
+                    All Requests
+                </a>
+                <a href="{{ url_for('admin_requests', status='pending') }}" 
+                   class="btn {{ 'btn-warning' if status_filter == 'pending' else 'btn-secondary' }}">
+                    Pending
+                </a>
+                <a href="{{ url_for('admin_requests', status='approved') }}" 
+                   class="btn {{ 'btn-success' if status_filter == 'approved' else 'btn-secondary' }}">
+                    Approved
+                </a>
+                <a href="{{ url_for('admin_requests', status='rejected') }}" 
+                   class="btn {{ 'btn-danger' if status_filter == 'rejected' else 'btn-secondary' }}">
+                    Rejected
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Requests List -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Requests ({{ requests|length }})</h2>
+        </div>
+
+        {% if requests %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Request ID</th>
+                        <th>Student</th>
+                        <th>Chemical</th>
+                        <th>Quantity</th>
+                        <th>Purpose</th>
+                        <th>Required Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td><strong>#{{ req.id }}</strong></td>
+                        <td>
+                            {{ req.student_name }}<br>
+                            <small>{{ req.student_email }}</small>
+                        </td>
+                        <td>{{ req.chemical_name }}</td>
+                        <td>{{ req.quantity_requested }} {{ req.unit }}</td>
+                        <td>{{ req.purpose[:50] }}{% if req.purpose|length > 50 %}...{% endif %}</td>
+                        <td>{{ req.required_date }}</td>
+                        <td>
+                            {% if req.status == 'pending' %}
+                            <span class="badge badge-warning">Pending</span>
+                            {% elif req.status == 'approved' %}
+                            <span class="badge badge-success">Approved</span>
+                            {% elif req.status == 'rejected' %}
+                            <span class="badge badge-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == 'pending' %}
+                            <button class="btn btn-small btn-success" onclick="handleRequest({{ req.id }}, 'approved')">Approve</button>
+                            <button class="btn btn-small btn-danger" onclick="handleRequest({{ req.id }}, 'rejected')">Reject</button>
+                            {% else %}
+                            <button class="btn btn-small btn-secondary" onclick="alert('Request ID: {{ req.id }}\nStatus: {{ req.status }}\nDate: {{ req.request_date }}')">View Details</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No requests found</h3>
+            <p>{% if status_filter == 'pending' %}No pending requests at the moment{% else %}No requests match the selected filter{% endif %}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function handleRequest(requestId, action) {
+    if (!confirm(`Are you sure you want to ${action === 'approved' ? 'approve' : 'reject'} this request?`)) {
+        return;
+    }
+    
+    fetch(`/api/requests/${requestId}/${action}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Request ${action} successfully!`);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to update request'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

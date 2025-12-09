@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 """
-Database initialization script for the Chemical Management System
-Run this script to create and initialize the database with sample users
+Script to reset and reinitialize the database
+WARNING: This will delete all existing data!
 """
 
-from database import init_database, create_user, get_user_by_username
+import os
+import database as db
 from werkzeug.security import generate_password_hash
 
-def add_sample_users():
-    """Add 2 admin users and 2 student users"""
+def reset_database():
+    """Delete existing database and create a new one"""
+    
+    # Delete existing database if it exists
+    if os.path.exists(db.DATABASE_NAME):
+        print(f"Deleting existing database: {db.DATABASE_NAME}")
+        os.remove(db.DATABASE_NAME)
+        print("✓ Old database deleted")
+    
+    # Initialize new database
+    print("\nInitializing new database...")
+    db.init_database()
+    print("✓ Database tables created")
+    
+    # Add sample users
+    print("\nAdding users...")
     
     users_to_add = [
         # Admins
@@ -29,6 +44,15 @@ def add_sample_users():
             'role': 'admin',
             'department': 'Chemical Engineering',
             'phone_number': '+1-555-0102'
+        },
+        {
+            'username': 'dulsara',
+            'email': 'dulsara@university.edu',
+            'password': '4321',
+            'full_name': 'Dulsara',
+            'role': 'admin',
+            'department': 'Administration',
+            'phone_number': '+1-555-0103'
         },
         # Students
         {
@@ -53,21 +77,10 @@ def add_sample_users():
         }
     ]
     
-    print("\nAdding sample users...")
-    
     for user in users_to_add:
         try:
-            # Check if user already exists
-            existing_user = get_user_by_username(user['username'])
-            if existing_user:
-                print(f"  ⚠️  User '{user['username']}' already exists, skipping...")
-                continue
-            
-            # Hash the password
             password_hash = generate_password_hash(user['password'])
-            
-            # Create the user
-            user_id = create_user(
+            user_id = db.create_user(
                 username=user['username'],
                 email=user['email'],
                 password_hash=password_hash,
@@ -77,31 +90,32 @@ def add_sample_users():
                 department=user.get('department'),
                 phone_number=user.get('phone_number')
             )
-            
-            print(f"  ✓ Created {user['role']}: {user['full_name']} ({user['username']})")
-            
+            print(f"  ✓ Created {user['role']}: {user['username']}")
         except Exception as e:
             print(f"  ✗ Error creating user '{user['username']}': {e}")
-
-if __name__ == '__main__':
-    print("="*60)
-    print("Initializing Chemical Management System Database")
-    print("="*60)
-    init_database()
-    print("✓ Database tables created successfully!")
-    
-    add_sample_users()
     
     print("\n" + "="*60)
-    print("Database setup complete!")
+    print("Database reset complete!")
     print("="*60)
     print("\nLogin credentials:")
     print("-" * 60)
     print("ADMINS:")
     print("  Username: admin1     | Password: Admin123!")
     print("  Username: admin2     | Password: Admin456!")
+    print("  Username: dulsara    | Password: 4321")
     print("\nSTUDENTS:")
     print("  Username: student1   | Password: Student123!")
     print("  Username: student2   | Password: Student456!")
     print("-" * 60)
-    print("\nYou can now run the application with: python3 app.py")
+
+if __name__ == '__main__':
+    print("="*60)
+    print("DATABASE RESET UTILITY")
+    print("="*60)
+    print("\nWARNING: This will delete all existing data!")
+    response = input("Are you sure you want to continue? (yes/no): ")
+    
+    if response.lower() == 'yes':
+        reset_database()
+    else:
+        print("\nOperation cancelled.")

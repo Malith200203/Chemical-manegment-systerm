@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">My Profile</h2>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+        <!-- Profile Card -->
+        <div class="card">
+            <div style="text-align: center; padding: 2rem;">
+                <div style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white;">
+                    {{ user.full_name[0].upper() if user.full_name else user.username[0].upper() }}
+                </div>
+                <h3>{{ user.full_name }}</h3>
+                <p style="color: #666;">@{{ user.username }}</p>
+                <p>
+                    {% if user.role == 'admin' %}
+                    <span class="badge" style="background-color: #667eea; font-size: 1rem; padding: 0.5rem 1rem;">Administrator</span>
+                    {% else %}
+                    <span class="badge badge-info" style="font-size: 1rem; padding: 0.5rem 1rem;">Student</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div style="border-top: 1px solid #eee; padding: 1.5rem;">
+                <h4 style="margin-bottom: 1rem;">Account Information</h4>
+                <div style="display: grid; gap: 0.75rem;">
+                    <div>
+                        <strong>Email:</strong><br>
+                        <span style="color: #666;">{{ user.email }}</span>
+                    </div>
+                    <div>
+                        <strong>Member Since:</strong><br>
+                        <span style="color: #666;">{{ user.created_at[:10] if user.created_at else 'N/A' }}</span>
+                    </div>
+                    <div>
+                        <strong>Last Login:</strong><br>
+                        <span style="color: #666;">{{ user.last_login[:10] if user.last_login else 'Never' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Edit Profile</h3>
+            </div>
+            <form method="POST" style="padding: 1.5rem;">
+                <div class="form-group">
+                    <label for="full_name">Full Name *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" 
+                           value="{{ user.full_name }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" 
+                           value="{{ user.email }}" disabled>
+                    <small style="color: #666;">Email cannot be changed. Contact an administrator if needed.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" class="form-control" 
+                           value="{{ user.department or '' }}" placeholder="e.g., Chemistry, Biology">
+                </div>
+
+                {% if user.role == 'student' %}
+                <div class="form-group">
+                    <label for="student_id">Student ID</label>
+                    <input type="text" id="student_id" name="student_id" class="form-control" 
+                           value="{{ user.student_id or '' }}" placeholder="e.g., STU12345">
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    <input type="tel" id="phone_number" name="phone_number" class="form-control" 
+                           value="{{ user.phone_number or '' }}" placeholder="+1-555-0123">
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Section -->
+    <div class="card" style="margin-top: 2rem;">
+        <div class="card-header">
+            <h3>Change Password</h3>
+        </div>
+        <form id="passwordForm" style="padding: 1.5rem;" onsubmit="changePassword(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="current_password">Current Password *</label>
+                    <input type="password" id="current_password" name="current_password" 
+                           class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">New Password *</label>
+                    <input type="password" id="new_password" name="new_password" 
+                           class="form-control" required minlength="8">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password *</label>
+                    <input type="password" id="confirm_password" name="confirm_password" 
+                           class="form-control" required>
+                </div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <button type="submit" class="btn btn-warning">🔒 Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function changePassword(event) {
+    event.preventDefault();
+    
+    const currentPassword = document.getElementById('current_password').value;
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match!');
+        return;
+    }
+    
+    if (newPassword.length < 8) {
+        alert('Password must be at least 8 characters long!');
+        return;
+    }
+    
+    fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Password changed successfully!');
+            document.getElementById('passwordForm').reset();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to change password'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

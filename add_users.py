@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
-Database initialization script for the Chemical Management System
-Run this script to create and initialize the database with sample users
+Script to add sample users to the Chemical Management System
 """
 
-from database import init_database, create_user, get_user_by_username
 from werkzeug.security import generate_password_hash
+import database as db
 
 def add_sample_users():
     """Add 2 admin users and 2 student users"""
+    
+    # Ensure database exists
+    if not db.os.path.exists(db.DATABASE_NAME):
+        db.init_database()
     
     users_to_add = [
         # Admins
@@ -29,6 +32,15 @@ def add_sample_users():
             'role': 'admin',
             'department': 'Chemical Engineering',
             'phone_number': '+1-555-0102'
+        },
+        {
+            'username': 'dulsara',
+            'email': 'dulsara@university.edu',
+            'password': '4321',
+            'full_name': 'Dulsara',
+            'role': 'admin',
+            'department': 'Administration',
+            'phone_number': '+1-555-0103'
         },
         # Students
         {
@@ -53,21 +65,21 @@ def add_sample_users():
         }
     ]
     
-    print("\nAdding sample users...")
+    print("Adding users to the database...\n")
     
     for user in users_to_add:
         try:
             # Check if user already exists
-            existing_user = get_user_by_username(user['username'])
+            existing_user = db.get_user_by_username(user['username'])
             if existing_user:
-                print(f"  ⚠️  User '{user['username']}' already exists, skipping...")
+                print(f"⚠️  User '{user['username']}' already exists, skipping...")
                 continue
             
             # Hash the password
             password_hash = generate_password_hash(user['password'])
             
             # Create the user
-            user_id = create_user(
+            user_id = db.create_user(
                 username=user['username'],
                 email=user['email'],
                 password_hash=password_hash,
@@ -78,30 +90,29 @@ def add_sample_users():
                 phone_number=user.get('phone_number')
             )
             
-            print(f"  ✓ Created {user['role']}: {user['full_name']} ({user['username']})")
+            print(f"✓ Created {user['role']}: {user['full_name']} ({user['username']})")
+            print(f"  Email: {user['email']}")
+            print(f"  Password: {user['password']}")
+            if user.get('student_id'):
+                print(f"  Student ID: {user['student_id']}")
+            print()
             
         except Exception as e:
-            print(f"  ✗ Error creating user '{user['username']}': {e}")
-
-if __name__ == '__main__':
-    print("="*60)
-    print("Initializing Chemical Management System Database")
-    print("="*60)
-    init_database()
-    print("✓ Database tables created successfully!")
-    
-    add_sample_users()
+            print(f"✗ Error creating user '{user['username']}': {e}\n")
     
     print("\n" + "="*60)
-    print("Database setup complete!")
+    print("User creation complete!")
     print("="*60)
-    print("\nLogin credentials:")
+    print("\nLogin credentials summary:")
     print("-" * 60)
-    print("ADMINS:")
+    print("\nADMINS:")
     print("  Username: admin1     | Password: Admin123!")
     print("  Username: admin2     | Password: Admin456!")
+    print("  Username: dulsara    | Password: 4321")
     print("\nSTUDENTS:")
     print("  Username: student1   | Password: Student123!")
     print("  Username: student2   | Password: Student456!")
     print("-" * 60)
-    print("\nYou can now run the application with: python3 app.py")
+
+if __name__ == '__main__':
+    add_sample_users()

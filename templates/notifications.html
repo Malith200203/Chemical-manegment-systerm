@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">📬 Notifications</h2>
+
+    <div class="card">
+        {% if notifications %}
+        <div style="padding: 0;">
+            {% for notification in notifications %}
+            <div style="border-bottom: 1px solid #eee; padding: 1.5rem; {% if not notification.is_read %}background-color: #f8f9ff;{% endif %}">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <h3 style="margin: 0 0 0.5rem 0; color: var(--primary-color);">
+                            {{ notification.title }}
+                        </h3>
+                        <p style="margin: 0 0 0.75rem 0; color: #666;">
+                            {{ notification.message }}
+                        </p>
+                        <small style="color: #999;">
+                            {{ notification.created_at }}
+                        </small>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                        {% if not notification.is_read %}
+                        <button class="btn btn-small btn-primary" onclick="markAsRead({{ notification.id }})">
+                            Mark as Read
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-small btn-danger" onclick="deleteNotification({{ notification.id }})">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="padding: 1rem; text-align: center; border-top: 2px solid #eee;">
+            <button class="btn btn-secondary" onclick="markAllAsRead()">Mark All as Read</button>
+            <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>📭 No notifications</h3>
+            <p>You're all caught up! No new notifications at the moment.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error marking notification as read');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+function deleteNotification(notificationId) {
+    if (!confirm('Delete this notification?')) {
+        return;
+    }
+    
+    fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error deleting notification');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+function markAllAsRead() {
+    fetch('/api/notifications/mark-all-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error marking all as read');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+
+function clearAll() {
+    if (!confirm('Delete all notifications? This cannot be undone.')) {
+        return;
+    }
+    
+    fetch('/api/notifications/clear-all', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error clearing notifications');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

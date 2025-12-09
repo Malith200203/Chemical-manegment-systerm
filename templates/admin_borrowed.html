@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Borrowed Items - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">Borrowed Items Management</h2>
+
+    <!-- Statistics -->
+    <div class="dashboard-grid" style="margin-bottom: 2rem;">
+        <div class="dashboard-card">
+            <h3>Active Borrows</h3>
+            <div class="number">{{ borrowed_items|selectattr('returned_date', 'none')|list|length }}</div>
+            <p>Currently borrowed items</p>
+        </div>
+        <div class="dashboard-card warning">
+            <h3>Overdue</h3>
+            <div class="number">
+                {% set now = [] %}
+                {% if now.append(None) %}{% endif %}
+                {{ borrowed_items|selectattr('returned_date', 'none')|selectattr('expected_return_date', 'lt', now[0]|string if now else '')|list|length }}
+            </div>
+            <p>Past expected return date</p>
+        </div>
+        <div class="dashboard-card success">
+            <h3>Returned</h3>
+            <div class="number">{{ borrowed_items|rejectattr('returned_date', 'none')|list|length }}</div>
+            <p>Completed returns</p>
+        </div>
+        <div class="dashboard-card">
+            <h3>Total</h3>
+            <div class="number">{{ borrowed_items|length }}</div>
+            <p>All borrow records</p>
+        </div>
+    </div>
+
+    <!-- Borrowed Items Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2>All Borrowed Items</h2>
+        </div>
+
+        {% if borrowed_items %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Student</th>
+                        <th>Chemical</th>
+                        <th>Quantity</th>
+                        <th>Borrowed Date</th>
+                        <th>Expected Return</th>
+                        <th>Returned Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in borrowed_items %}
+                    <tr>
+                        <td><strong>#{{ item.id }}</strong></td>
+                        <td>
+                            {{ item.student_name }}<br>
+                            <small>{{ item.student_email }}</small>
+                        </td>
+                        <td>{{ item.chemical_name }}</td>
+                        <td>{{ item.quantity_borrowed }} {{ item.unit }}</td>
+                        <td>{{ item.borrowed_date }}</td>
+                        <td>{{ item.expected_return_date }}</td>
+                        <td>
+                            {% if item.returned_date %}
+                            <span style="color: var(--success-color);">{{ item.returned_date }}</span>
+                            {% else %}
+                            <span style="color: #999;">Not returned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.returned_date %}
+                            <span class="badge badge-success">Returned</span>
+                            {% elif item.expected_return_date < now()|string %}
+                            <span class="badge badge-danger">Overdue</span>
+                            {% else %}
+                            <span class="badge badge-warning">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not item.returned_date %}
+                            <button class="btn btn-small btn-success" onclick="markReturned({{ item.id }})">Mark Returned</button>
+                            {% else %}
+                            <button class="btn btn-small btn-secondary" disabled>Completed</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No borrowed items</h3>
+            <p>There are currently no borrowed items in the system</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function markReturned(borrowId) {
+    if (!confirm('Mark this item as returned?')) {
+        return;
+    }
+    
+    fetch(`/api/borrowed/${borrowId}/return`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Item marked as returned successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to mark item as returned'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

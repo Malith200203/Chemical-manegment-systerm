@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}My Borrowed Items - Student{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">My Borrowed Items</h2>
+
+    <!-- Statistics -->
+    <div class="dashboard-grid" style="margin-bottom: 2rem;">
+        <div class="dashboard-card">
+            <h3>Currently Borrowed</h3>
+            <div class="number">{{ borrowed_items|selectattr('returned_date', 'none')|list|length }}</div>
+            <p>Items in your possession</p>
+        </div>
+        <div class="dashboard-card warning">
+            <h3>Overdue</h3>
+            <div class="number">
+                {% set now = [] %}
+                {% if now.append(None) %}{% endif %}
+                {{ borrowed_items|selectattr('returned_date', 'none')|selectattr('expected_return_date', 'lt', now[0]|string if now else '')|list|length }}
+            </div>
+            <p>Past expected return date</p>
+        </div>
+        <div class="dashboard-card success">
+            <h3>Returned</h3>
+            <div class="number">{{ borrowed_items|rejectattr('returned_date', 'none')|list|length }}</div>
+            <p>Successfully returned</p>
+        </div>
+        <div class="dashboard-card">
+            <h3>Total Borrows</h3>
+            <div class="number">{{ borrowed_items|length }}</div>
+            <p>All time</p>
+        </div>
+    </div>
+
+    <!-- Borrowed Items Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Borrow History</h2>
+        </div>
+
+        {% if borrowed_items %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Chemical</th>
+                        <th>Quantity</th>
+                        <th>Borrowed Date</th>
+                        <th>Expected Return</th>
+                        <th>Returned Date</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in borrowed_items %}
+                    <tr {% if not item.returned_date and item.expected_return_date < now()|string %}style="background-color: #fff3cd;"{% endif %}>
+                        <td><strong>#{{ item.id }}</strong></td>
+                        <td>{{ item.chemical_name }}</td>
+                        <td>{{ item.quantity_borrowed }} {{ item.unit }}</td>
+                        <td>{{ item.borrowed_date }}</td>
+                        <td>
+                            {{ item.expected_return_date }}
+                            {% if not item.returned_date and item.expected_return_date < now()|string %}
+                            <br><small style="color: var(--danger-color);">⚠️ Overdue!</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.returned_date %}
+                            <span style="color: var(--success-color);">{{ item.returned_date }}</span>
+                            {% else %}
+                            <span style="color: #999;">Not returned yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.returned_date %}
+                            <span class="badge badge-success">✅ Returned</span>
+                            {% elif item.expected_return_date < now()|string %}
+                            <span class="badge badge-danger">⚠️ Overdue</span>
+                            {% else %}
+                            <span class="badge badge-warning">📦 Active</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.notes %}
+                            <button class="btn btn-small btn-secondary" onclick="alert('Notes:\n{{ item.notes }}')">
+                                View Notes
+                            </button>
+                            {% else %}
+                            <span style="color: #999;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if borrowed_items|selectattr('returned_date', 'none')|list|length > 0 %}
+        <div style="padding: 1.5rem; background-color: #f8f9fa; border-top: 1px solid #eee;">
+            <h4 style="margin-bottom: 1rem; color: var(--primary-color);">⚠️ Important Reminders</h4>
+            <ul style="margin: 0; padding-left: 1.5rem; color: #666;">
+                <li>Please return all chemicals by their expected return date</li>
+                <li>Ensure chemicals are properly sealed and labeled when returning</li>
+                <li>Report any issues or accidents immediately to the lab administrator</li>
+                <li>Late returns may affect your ability to borrow in the future</li>
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <h3>No borrowed items</h3>
+            <p>You haven't borrowed any chemicals yet</p>
+            <a href="{{ url_for('inventory') }}" class="btn btn-primary">Browse Available Chemicals</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
