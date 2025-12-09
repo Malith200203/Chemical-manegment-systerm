@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Chemical Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem; color: var(--primary-color);">Dashboard</h2>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <h3>Total Chemicals</h3>
+            <div class="number">{{ summary.total_chemicals }}</div>
+            <p>Unique chemical compounds</p>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Inventory Items</h3>
+            <div class="number">{{ summary.total_inventory_items }}</div>
+            <p>Total inventory entries</p>
+        </div>
+
+        <div class="dashboard-card warning">
+            <h3>Expiring Soon</h3>
+            <div class="number">{{ summary.expiring_soon }}</div>
+            <p>Items expiring in 30 days</p>
+        </div>
+
+        <div class="dashboard-card danger">
+            <h3>Expired Items</h3>
+            <div class="number">{{ summary.expired_items }}</div>
+            <p>Items past expiry date</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Chemicals</h2>
+            <a href="{{ url_for('inventory') }}" class="btn btn-primary">View All</a>
+        </div>
+
+        {% if recent_chemicals %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Formula</th>
+                        <th>CAS Number</th>
+                        <th>Hazard</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chemical in recent_chemicals %}
+                    <tr>
+                        <td><strong>{{ chemical.name }}</strong></td>
+                        <td>{{ chemical.chemical_formula or 'N/A' }}</td>
+                        <td>{{ chemical.cas_number or 'N/A' }}</td>
+                        <td>
+                            {% if chemical.hazard_name %}
+                            <span class="badge" style="background-color: {{ chemical.color_code }};">
+                                {{ chemical.hazard_name }}
+                            </span>
+                            {% else %}
+                            <span class="badge badge-info">Not Classified</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('chemical_detail', chemical_id=chemical.id) }}" class="btn btn-small btn-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No chemicals in the system</h3>
+            <p>Start by adding your first chemical</p>
+            <a href="{{ url_for('add_chemical_page') }}" class="btn btn-primary">Add Chemical</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Quick Actions</h2>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+            <a href="{{ url_for('add_chemical_page') }}" class="btn btn-success">➕ Add New Chemical</a>
+            <a href="{{ url_for('inventory') }}" class="btn btn-primary">📦 View Inventory</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
