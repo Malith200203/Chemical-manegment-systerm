@@ -14,13 +14,45 @@
                 <ul>
                     <li><a href="{{ url_for('index') }}">Dashboard</a></li>
                     <li><a href="{{ url_for('inventory') }}">Inventory</a></li>
-                    <li><a href="{{ url_for('add_chemical_page') }}">Add Chemical</a></li>
+                    
+                    {% if current_user and current_user.role == 'admin' %}
+                        <li><a href="{{ url_for('add_chemical_page') }}">Add Chemical</a></li>
+                        <li><a href="{{ url_for('admin_requests') }}">Requests 
+                            {% if unread_count > 0 %}
+                            <span class="badge badge-danger" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; margin-left: 0.25rem;">{{ unread_count }}</span>
+                            {% endif %}
+                        </a></li>
+                        <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+                    {% elif current_user and current_user.role == 'student' %}
+                        <li><a href="{{ url_for('my_requests') }}">My Requests</a></li>
+                        <li><a href="{{ url_for('my_borrowed') }}">My Borrowed</a></li>
+                    {% endif %}
+                    
+                    {% if current_user %}
+                        <li><a href="{{ url_for('notifications') }}">
+                            🔔 
+                            {% if unread_count > 0 %}
+                            <span class="badge badge-danger" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">{{ unread_count }}</span>
+                            {% endif %}
+                        </a></li>
+                        <li><a href="{{ url_for('profile') }}">{{ current_user.username }} ({{ current_user.role }})</a></li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
     </header>
 
     <main>
+        <div class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
         {% block content %}{% endblock %}
     </main>
 
