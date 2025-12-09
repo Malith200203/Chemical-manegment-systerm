@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{{ chemical.name }} - Chemical Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ chemical.name }}</h2>
+            <div class="action-buttons">
+                <a href="{{ url_for('edit_chemical_page', chemical_id=chemical.id) }}" class="btn btn-warning">✏️ Edit</a>
+                <button onclick="deleteChemical({{ chemical.id }}, '{{ chemical.name }}')" class="btn btn-danger">🗑️ Delete</button>
+                <a href="{{ url_for('inventory') }}" class="btn btn-primary">← Back</a>
+            </div>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item">
+                <label>Chemical Formula</label>
+                <div class="value">{{ chemical.chemical_formula or 'N/A' }}</div>
+            </div>
+
+            <div class="detail-item">
+                <label>CAS Number</label>
+                <div class="value">{{ chemical.cas_number or 'N/A' }}</div>
+            </div>
+
+            <div class="detail-item">
+                <label>Molecular Weight</label>
+                <div class="value">{{ chemical.molecular_weight or 'N/A' }} g/mol</div>
+            </div>
+
+            <div class="detail-item">
+                <label>Supplier</label>
+                <div class="value">{{ chemical.supplier or 'N/A' }}</div>
+            </div>
+        </div>
+
+        {% if chemical.hazard_name %}
+        <div style="margin: 2rem 0;">
+            <h3 style="margin-bottom: 1rem;">Safety Information</h3>
+            <div class="hazard-badge" style="background-color: {{ chemical.color_code }};">
+                ⚠️ {{ chemical.hazard_name }}
+            </div>
+            {% if chemical.hazard_description %}
+            <p style="margin-top: 1rem; color: #7f8c8d;">{{ chemical.hazard_description }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if chemical.description %}
+        <div style="margin: 2rem 0;">
+            <h3 style="margin-bottom: 1rem;">Description</h3>
+            <p style="color: #7f8c8d;">{{ chemical.description }}</p>
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 1rem; padding: 1rem; background-color: var(--light-bg); border-radius: 5px;">
+            <p style="margin: 0; color: #7f8c8d;">
+                <strong>Created:</strong> {{ chemical.created_at }} | 
+                <strong>Last Updated:</strong> {{ chemical.updated_at }}
+            </p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Inventory Items</h2>
+            <button onclick="addInventoryItem({{ chemical.id }})" class="btn btn-success">➕ Add Stock</button>
+        </div>
+
+        {% if inventory_items %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Batch Number</th>
+                        <th>Received Date</th>
+                        <th>Expiry Date</th>
+                        <th>Status</th>
+                        <th>Cost</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in inventory_items %}
+                    <tr>
+                        <td><strong>{{ item.quantity }} {{ item.unit }}</strong></td>
+                        <td>
+                            {% if item.location_name %}
+                                {{ item.location_name }}<br>
+                                <small style="color: #7f8c8d;">
+                                    {{ item.building }}, {{ item.room }}, {{ item.cabinet }}, {{ item.shelf }}
+                                </small>
+                            {% else %}
+                                <span style="color: #95a5a6;">Not specified</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.batch_number or 'N/A' }}</td>
+                        <td>{{ item.received_date or 'N/A' }}</td>
+                        <td>{{ item.expiry_date or 'N/A' }}</td>
+                        <td>
+                            {% if item.expiry_date %}
+                                {% set today = None %}
+                                {% set expiry = None %}
+                                <span class="badge" data-expiry="{{ item.expiry_date }}"></span>
+                            {% else %}
+                                <span class="badge badge-info">No Expiry</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ '$%.2f' | format(item.cost) if item.cost else 'N/A' }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button onclick="updateQuantity({{ item.id }})" class="btn btn-small btn-warning">Update</button>
+                                <button onclick="deleteInventoryItem({{ item.id }})" class="btn btn-small btn-danger">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No inventory items</h3>
+            <p>Add stock items to track this chemical's inventory</p>
+            <button onclick="addInventoryItem({{ chemical.id }})" class="btn btn-success">Add Stock</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

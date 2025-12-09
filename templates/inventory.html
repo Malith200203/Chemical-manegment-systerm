@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory - Chemical Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Chemical Inventory</h2>
+            <a href="{{ url_for('add_chemical_page') }}" class="btn btn-success">➕ Add Chemical</a>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search by name, formula, or CAS number...">
+        </div>
+
+        {% if chemicals %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-sortable>ID</th>
+                        <th data-sortable>Name</th>
+                        <th data-sortable>Formula</th>
+                        <th data-sortable>CAS Number</th>
+                        <th>Molecular Weight</th>
+                        <th>Supplier</th>
+                        <th>Hazard</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for chemical in chemicals %}
+                    <tr>
+                        <td>{{ chemical.id }}</td>
+                        <td><strong>{{ chemical.name }}</strong></td>
+                        <td>{{ chemical.chemical_formula or 'N/A' }}</td>
+                        <td>{{ chemical.cas_number or 'N/A' }}</td>
+                        <td>{{ chemical.molecular_weight or 'N/A' }}</td>
+                        <td>{{ chemical.supplier or 'N/A' }}</td>
+                        <td>
+                            {% if chemical.hazard_name %}
+                            <span class="badge" style="background-color: {{ chemical.color_code }};">
+                                {{ chemical.hazard_name }}
+                            </span>
+                            {% else %}
+                            <span class="badge badge-info">Not Classified</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('chemical_detail', chemical_id=chemical.id) }}" class="btn btn-small btn-primary">View</a>
+                                <a href="{{ url_for('edit_chemical_page', chemical_id=chemical.id) }}" class="btn btn-small btn-warning">Edit</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <h3>No chemicals found</h3>
+            <p>Start by adding your first chemical to the inventory</p>
+            <a href="{{ url_for('add_chemical_page') }}" class="btn btn-success">Add Chemical</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
